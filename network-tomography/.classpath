@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="lib" path="lib/groovy-all-1.7.2.jar" sourcepath="/git/third-party/groovy-1.7.1"/>
+	<classpathentry kind="lib" path="lib/jgroups-2.11.1.Final.jar"/>
+	<classpathentry kind="lib" path="lib/guava-r09.jar" sourcepath="/git/third-party/guava-r08"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="GROOVY_SUPPORT"/>
+	<classpathentry exported="true" kind="con" path="GROOVY_DSL_SUPPORT"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
