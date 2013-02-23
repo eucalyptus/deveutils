@@ -17,16 +17,20 @@ fi
 SUBWIDTH=$(cd ${REPO_DIR}; git submodule | awk '{if(max<length($2)) max=length($2)}END{print max+2}')
 COLS=$(tput cols)
 WIDTH=$(echo "${COLS}-${SUBWIDTH}" | bc)
+RED="\E[1;31m"
+RESET="\E[0m"
+WHITE="\E[1;37m"
+GREEN="\E[0;32m"
 
 function stripAnsi() {
   echo -en "${@}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
 }
 
 function printSub() {
-  COLOR=2
+  COLOR=${GREEN}
   if [[ "$1" == "ERROR" ]]; then
     shift
-    COLOR=1
+    COLOR=${RED}
   fi
   SUFFIX=$1
   shift
@@ -42,16 +46,14 @@ function printSub() {
     pad=$((COLS-clen-SUBWIDTH))
 #    line=${line//\n/}
     fulllen=$((clen+pad+subpad))
-    printf "%-${len}s" "${line}"
+    OUT=$(printf "%-${len}s" "${line}")
     if [ ${subpad} -gt 0 ] && [ ${pad} -gt 0 ] && [ $fulllen -lt $COLS ]; then
-      printf "%-${pad}.${pad}s" " " 
-      tput setaf ${COLOR}; tput bold;
-      printf "#"
-      tput sgr0
-      printf "%${subpad}.${subpad}s" " $SUFFIX"
+      OUT=${OUT}$(printf "%-${pad}.${pad}s" " ")
+      OUT=${OUT}$(printf "${COLOR}#${WHITE}")
+      OUT=${OUT}$(printf "%${subpad}.${subpad}s${RESET}" " $SUFFIX")
     fi
     tput sgr0
-    printf "\n"
+    printf "${OUT}\n"
 #    printf "$len $clen $pad $subpad $sublen $fulllen\n"
   done
 }
@@ -68,9 +70,9 @@ function printRedir() {
   {
     {
       ${@} 3>&- |
-      printSub  $MODULE {} 2>&3 3>&-
+      printSub  ${MODULE} {} 2>&3 3>&-
     } 2>&1 >&4 4>&- |
-    printSuberr "${MODULE}" {} 3>&- 4>&-
+    printSuberr ${MODULE} {} 3>&- 4>&-
   } 3>&2 4>&1
 }
 
