@@ -1,0 +1,134 @@
+#!/bin/bash
+CMD=$0
+PRINTSUB=$(dirname $(readlink -f ${CMD}))/gis-print-sub
+REPO_DIR=$(git rev-parse --show-toplevel)
+GIT="git -c color.ui="
+if [ -t 1 ]; then 
+  GIT="${GIT}always"
+else
+  GIT="${GIT}auto"
+fi
+GIT_CHANGED=" status -s --untracked=no"
+GIT_UNCOMMITTED=" status -s --untracked=all | egrep -v '^\?\?'"
+if [ -e ${REPO_DIR}/../.gitmodules ]; then
+  REPO_DIR=$(readlink -f ${REPO_DIR}/../)
+
+fi
+SUBWIDTH=$(cd ${REPO_DIR}; git submodule | awk '{if(max<length($2)) max=length($2)}END{print max+2}')
+COLS=$(tput cols)
+WIDTH=$(echo "${COLS}-${SUBWIDTH}" | bc)
+
+function stripAnsi() {
+  echo -en "${@}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+}
+
+function printSub() {
+  COLOR=2
+  if [[ "$1" == "ERROR" ]]; then
+    shift
+    COLOR=1
+  fi
+  SUFFIX=$1
+  shift
+  while IFS= read -r line; do
+    line=$(echo -en $line)
+    cline=$(stripAnsi "${line}")
+    len=${#line}
+    clen=${#cline}
+    sublen=${#SUFFIX}
+    len=$((len%COLS))
+    clen=$((clen%COLS))
+    subpad=$((SUBWIDTH-1))
+    pad=$((COLS-clen-SUBWIDTH))
+#    line=${line//\n/}
+    fulllen=$((clen+pad+subpad))
+    printf "%-${len}s" "${line}"
+    if [ ${subpad} -gt 0 ] && [ ${pad} -gt 0 ] && [ $fulllen -lt $COLS ]; then
+      printf "%-${pad}.${pad}s" " " 
+      tput setaf ${COLOR}; tput bold;
+      printf "#"
+      tput sgr0
+      printf "%${subpad}.${subpad}s" " $SUFFIX"
+    fi
+    tput sgr0
+    printf "\n"
+#    printf "$len $clen $pad $subpad $sublen $fulllen\n"
+  done
+}
+
+function printSuberr() {
+  MODULE=$1
+  shift
+  printSub ERROR $MODULE ${@} 
+}
+
+function printRedir() {
+  MODULE=$1
+  shift
+  {
+    {
+      ${@} 3>&- |
+      printSub  $MODULE {} 2>&3 3>&-
+    } 2>&1 >&4 4>&- |
+    printSuberr "${MODULE}" {} 3>&- 4>&-
+  } 3>&2 4>&1
+}
+
+function submodulesExec() {
+  ( cd ${REPO_DIR}
+    for m in $(git submodule | awk '{print $2}'); do
+      ( cd $m
+        printRedir $m ${GIT} ${@}
+      )
+    done
+    printRedir $(basename ${REPO_DIR}) ${GIT} ${@}
+  )
+}
+
+if complete | egrep ' gis$'; then
+  (
+  echo "Bash completion command to give git command completion:"
+  echo
+  echo "  complete -o bashdefault -o default -o nospace -F _git gis"
+  echo
+  echo "- Either add this to your ~/.bashrc"
+  echo "- Stuff it into a file in /etc/bash_completion.d/gis" 
+  ) >&2
+  exit 1
+fi
+
+ERRMSG=1
+
+if submodulesExec status -s --untracked=no --ignore-submodules=all | grep '.' >/dev/null; then
+  tput bold
+  echo -n "==== "
+  tput setaf 1
+  echo -n "MUST FIX: Uncommitted changes present!"
+  tput setaf 7
+  echo " ===="
+  tput sgr0
+  submodulesExec status -s --untracked=no --ignore-submodules=all 
+  ERRMSG=$((ERRMSG*2))
+fi
+if (cd ${REPO_DIR}; git status -s --untracked=no --ignore-submodules=untracked ) | grep '.' >/dev/null; then
+  tput bold
+  echo -n "==== "
+  tput setaf 1
+  echo -n "MUST FIX: Uncommitted submodules present!"
+  tput setaf 7
+  echo " ===="
+  tput sgr0
+  (cd ${REPO_DIR}; 
+    for mod in $(git submodule | awk '{print $2}'); do
+      printRedir $mod git -c color.ui=always status -s --untracked=no --ignore-submodules=untracked $mod
+      printRedir $mod git -c color.ui=always diff --ignore-submodules=untracked $mod
+    done
+  )
+  ERRMSG=$((ERRMSG*4))
+fi 
+
+if [[ "${ERRMSG}" -gt 1 ]]; then
+  exit $ERRMSG
+fi
+
+submodulesExec ${@}
