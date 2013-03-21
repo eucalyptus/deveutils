@@ -82,8 +82,8 @@ done
 
 BRANCHARGS=
 for f in ${@}; do
-  if ! git branch ${BRANCHLOCATION} | egrep '^  '$f; then
-    BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | grep evac | sed 's/\*/ /g'))"
+  if ! git branch ${BRANCHLOCATION} | egrep '^  '$f >/dev/null 2>&1; then
+    BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | grep $f | sed 's/\*/ /g'))"
   else
     BRANCHARGS="${BRANCHARGS} $f"
   fi

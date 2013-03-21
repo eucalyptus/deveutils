@@ -156,9 +156,9 @@ function printRedir() {
 function topExec() {
   ( cd ${REPO_DIR}
     if ! unsafeCommand ${@}; then
-      printRedir $(basename ${REPO_DIR}) ${GIT} ${@}
+      printRedir $(basename ${REPO_DIR}) ${GIT} "${@}"
     else
-      ${GIT} ${@}
+      ${GIT} "${@}"
     fi
   )
 }
@@ -195,7 +195,7 @@ if complete | egrep ' gis$'; then
 fi
 
 if [[ "$(basename $CMD)" == "gist" ]]; then
-  topExec ${@} 
+  topExec "${@}"
 elif [[ "$(basename $CMD)" == "gisd" ]]; then
   submodulesExec ${@}
 elif declare -F $1 >/dev/null; then
