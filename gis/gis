@@ -45,26 +45,25 @@ CONTAINS="master testing maint/3.2/master maint/3.2/testing"
 function branches() {
   for f in $(git branch | sed 's/\*/ /g' | awk '{print $1}'); do
     basef=$(shorten $f)
-    NOTES="($(git notes show $f 2>/dev/null))"
-    HASBRANCH=$(git branch --contains $f)
+    NOTES="($(git config --get branch.$f.description)$(git notes show $f 2>/dev/null))"
+    HASBRANCH="$(git branch ${@} --contains $f)"
     BRANCHES_CONTAINING=""
     for b in $CONTAINS; do
       baseb=$(shorten $b | sed 's/\([^\/]\)[^\/]*$/\1/g')
-      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} ${baseb}:$(echo ${HASBRANCH}|egrep  \ $b\$|wc -l)"
+      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} ${baseb}:"$(echo "${HASBRANCH}"|sed 's/origin\///g' | egrep  ^..$b\$|wc -l)
     done
     BRANCHES_CONTAINING="${BRANCHES_CONTAINING} team:$(echo ${HASBRANCH}|egrep team/|wc -l)"
     BRANCHES_CONTAINING="${BRANCHES_CONTAINING} dev:$(echo ${HASBRANCH}|egrep dev/|grep -v $f|wc -l)"
     echo "${BRANCHES_CONTAINING}" | 
-    xargs -i echo -n "$(printf %-30.30s $basef) {}" ${NOTES} | 
-    ( export GREP_COLORS="mt=01;37"; egrep --color=always '^[^ ]*' ) |
+    xargs -i echo -n "$(printf %-20.20s ${basef}) {}" ${NOTES} | 
+    ( export GREP_COLORS="mt=01"; egrep --color=always '^[^ ]*' ) |
     ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|[^ ]*:1' ) |
     ( export GREP_COLORS="mt=00;32"; egrep --color=always '^|[^ ]*:[^01][0-9]*' ) |
     ( export GREP_COLORS="mt=00;31"; egrep --color=always '^|[^ ]*:0' ) |
-    ( export GREP_COLORS="mt=00;33"; egrep --color=always '^|\(.*\)' ) |
     ( export GREP_COLORS="mt=0"; egrep --color=always '^|(dev|team):0' ) |
     xargs -i echo "{} $(git -c color.ui=always log --oneline $f | head -n1)" |
     ( export GREP_COLORS="mt=01;37"; egrep --color=always '^[^ ]*' ) |
-    ( export GREP_COLORS="mt=00;33"; egrep --color=always '^|\(.*\)' )
+    ( export GREP_COLORS="mt=01;33"; egrep --color=always '^|\(.*\)' )
   done
 }
 
