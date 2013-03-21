@@ -1,0 +1,91 @@
+#!/bin/bash 
+
+BRANCHLOCATION=
+
+function shorten() {
+  if echo $1 | grep / >/dev/null; then
+    echo $(echo $(dirname $1) | sed 's/\([a-zA-Z]\)[^\/]*/\1/g')/$(basename $1)
+  else
+    echo $1
+  fi
+}
+
+CONTAINS="master testing maint/3.2/master maint/3.2/testing"
+function branches() {
+  CHECK_BRANCHES=${@}
+  if [[ -z "${@}" ]]; then
+    CHECK_BRANCHES=$(git branch | sed 's/\*/ /g' | awk '{print $1}')
+  fi
+  for f in ${CHECK_BRANCHES}; do
+    basef=$(shorten $f)
+    NOTES="($(git config --get branch.$f.description)$(git notes show $f 2>/dev/null))"
+    HASBRANCH="$(git branch ${BRANCHLOCATION} --contains $f)"
+    if [ $(git tag --contains $f | wc -l) -ne 0 ]; then 
+      HASTAGS=" tags:["$(echo $(git tag --contains maint/3.2/security) | sed 's/ /,/g')"]"; 
+    else
+      HASTAGS=""
+    fi
+    BRANCHES_CONTAINING=""
+    for b in $CONTAINS; do
+      baseb=$(shorten $b | sed 's/\([^\/]\)[^\/]*$/\1/g')
+      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} ${baseb}:"$(echo "${HASBRANCH}"|sed 's/origin\///g' | egrep  ^..$b\$|wc -l)
+    done
+    BRANCHES_CONTAINING="${BRANCHES_CONTAINING} team:$(echo ${HASBRANCH}|egrep team/|wc -l)"
+    BRANCHES_CONTAINING="${BRANCHES_CONTAINING} dev:$(echo ${HASBRANCH}|egrep dev/|grep -v $f|wc -l)"
+    BRANCHES_CONTAINING="${BRANCHES_CONTAINING}${HASTAGS} ${NOTES}"
+    echo "${BRANCHES_CONTAINING}" | 
+    xargs -i echo -n "$(printf %-20.20s ${basef}) {}" | 
+    ( export GREP_COLORS="mt=01"; egrep --color=always '^[^ ]*' ) |
+    ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|[^ ]*:1' ) |
+    ( export GREP_COLORS="mt=00;32"; egrep --color=always '^|[^ ]*:[^01[][0-9]*' ) |
+    ( export GREP_COLORS="mt=00;31"; egrep --color=always '^|[^ ]*:0' ) |
+    ( export GREP_COL
+    ORS="mt=0"; egrep --color=always '^|(dev|team):0' ) |
+    xargs -i echo "{}" |
+    ( export GREP_COLORS="mt=01;37"; egrep --color=always '^[^ ]*' ) |
+    ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|tags:[^ ]*' ) |
+    ( export GREP_COLORS="mt=01;33"; egrep --color=always '^|\(.*\)' )
+    if [ -n "${LOGLINE}" ]; then
+      echo "$(printf '%-21.21s' ' ')$(git -c color.ui=always log --oneline $f | head -n1)"
+    fi
+  done
+}
+
+ARGS=$(getopt -o lra -l "log,remote,all" -- "$@");
+if [ $? -ne 0 ];
+then
+  exit 1
+fi
+eval set -- "$ARGS";
+
+while true; do
+  case "$1" in
+    -l|--log)
+      shift;
+      LOGLINE=1
+    ;;
+    -r|--remote)
+      shift;
+      BRANCHLOCATION="-r"
+      unset LOCAL
+    ;;
+    -a|--all)
+      shift;
+      BRANCHLOCATION="-a"
+    ;;
+    --)
+      shift;
+      break;
+      ;;
+  esac
+done
+
+BRANCHARGS=
+for f in ${@}; do
+  if ! git branch ${BRANCHLOCATION} | egrep '^  '$f; then
+    BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | grep evac | sed 's/\*/ /g'))"
+  else
+    BRANCHARGS="${BRANCHARGS} $f"
+  fi
+done
+branches ${BRANCHARGS}
