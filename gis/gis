@@ -112,7 +112,7 @@ function printSub() {
   SUFFIX=$1
   shift
   while IFS= read -r line; do
-    line=$(echo -en $line)
+    line=$(echo -en "$line")
     cline=$(stripAnsi "${line}")
     len=${#line}
     clen=${#cline}
@@ -130,7 +130,7 @@ function printSub() {
       OUT=${OUT}$(printf "%${subpad}.${subpad}s${RESET}" " $SUFFIX")
     fi
     tput sgr0
-    printf "${OUT}\n"
+    printf -- "${OUT}\n"
 #    printf "$len $clen $pad $subpad $sublen $fulllen\n"
   done
 }
@@ -138,7 +138,7 @@ function printSub() {
 function printSuberr() {
   MODULE=$1
   shift
-  printSub ERROR $MODULE ${@} 
+  printSub ERROR $MODULE "${@}"
 }
 
 function printRedir() {
