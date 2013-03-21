@@ -36,7 +36,7 @@ function unsafeCommand() {
 function checkBranches() {
   if (cd ${REPO_DIR}; 
       git status -sb  --untracked=no --ignore-submodules=all;
-      git submodule foreach git status -b  --untracked=no --ignore-submodules=all
+      git submodule foreach git status -sb  --untracked=no --ignore-submodules=all
      ) | 
      egrep '^\#\#' | sort | uniq -c | wc -l | egrep '^[^1]$' >/dev/null; then
     tput bold
@@ -168,9 +168,9 @@ function submodulesExec() {
     for m in $(git submodule | awk '{print $2}'); do
       ( cd $m
         if ! unsafeCommand ${@}; then
-          printRedir $m ${GIT} ${@}
+          printRedir $m ${GIT} "${@}"
         else
-          ${GIT} ${@}
+          ${GIT} "${@}"
         fi
       )
     done
@@ -203,9 +203,9 @@ elif declare -F $1 >/dev/null; then
   shift
   $C ${@}
 else
-  checkUncommitted >&2
   checkModules >&2
   checkBranches >&2
+  checkUncommitted >&2
   if [ ${ERRMSG} -gt 1 ]; then
     exit $ERRMSG
   fi
