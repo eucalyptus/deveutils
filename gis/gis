@@ -36,7 +36,7 @@ function unsafeCommand() {
 function checkBranches() {
   if (cd ${REPO_DIR}; 
       git status -sb  --untracked=no --ignore-submodules=all;
-      git submodule foreach git status -sb  --untracked=no --ignore-submodules=all
+#      git submodule foreach git status -sb  --untracked=no --ignore-submodules=all
      ) | 
      egrep '^\#\#' | sort | uniq -c | wc -l | egrep '^[^1]$' >/dev/null; then
     tput bold
@@ -55,15 +55,14 @@ function checkBranches() {
       mod=internal
       printRedir $mod ${GIT} status -sb --untracked=no --ignore-submodules=untracked
     )
-    ERRMSG=$((ERRMSG*4))
-    return 4
+    exit 4
   else
     return 0
   fi 
 }
 
 function checkModules() {
-  if (cd ${REPO_DIR}; git status -s --untracked=no --ignore-submodules=untracked ) | grep '.' >/dev/null; then
+  if (cd ${REPO_DIR}; git status -s --untracked=no --ignore-submodules=dirty ) | grep '.' >/dev/null; then
     tput bold
     echo -n "==== "
     tput setaf 1
@@ -73,8 +72,8 @@ function checkModules() {
     tput sgr0
     (cd ${REPO_DIR}; 
       for mod in $(git submodule | awk '{print $2}'); do
-        printRedir $mod ${GIT} status -s --untracked=no --ignore-submodules=untracked $mod
-        printRedir $mod ${GIT} diff --ignore-submodules=untracked $mod
+        printRedir $mod ${GIT} status -s --untracked=no --ignore-submodules=dirty $mod
+        printRedir $mod ${GIT} diff --ignore-submodules=dirty $mod
       done
     )
     ERRMSG=$((ERRMSG*4))
@@ -203,8 +202,8 @@ elif declare -F $1 >/dev/null; then
   shift
   $C ${@}
 else
-  checkModules >&2
   checkBranches >&2
+  checkModules >&2
   checkUncommitted >&2
   if [ ${ERRMSG} -gt 1 ]; then
     exit $ERRMSG
