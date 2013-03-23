@@ -154,7 +154,7 @@ function printRedir() {
 
 function topExec() {
   ( cd ${REPO_DIR}
-    if ! unsafeCommand ${@}; then
+    if ! unsafeCommand ${1}; then
       printRedir $(basename ${REPO_DIR}) ${GIT} "${@}"
     else
       ${GIT} "${@}"
