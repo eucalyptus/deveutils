@@ -2,11 +2,12 @@
 CMD=$0
 PRINTSUB=$(dirname $(readlink -f ${CMD}))/gis-print-sub
 REPO_DIR=$(git rev-parse --show-toplevel)
-GIT="git -c color.ui="
-if [ -t 1 ]; then 
-  GIT="${GIT}always"
+if ! git -c color.ui=always version >/dev/null 2>&1; then 
+  GIT="git"
+elif [ -t 1 ]; then 
+  GIT="git -c color.ui=always"
 else
-  GIT="${GIT}auto"
+  GIT="git -c color.ui=auto"
 fi
 GIT_CHANGED=" status -s --untracked=no"
 GIT_UNCOMMITTED=" status -s --untracked=all | egrep -v '^\?\?'"
@@ -99,9 +100,10 @@ function checkUncommitted() {
 }
 
 function stripAnsi() {
-  echo -en "${@}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+  echo -en "${@}" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g;s/\x1B\(B//g"
 }
 
+EMPTY="                                                                                                                                                                             "
 function printSub() {
   COLOR=${GREEN}
   if [[ "$1" == "ERROR" ]]; then
@@ -110,34 +112,34 @@ function printSub() {
   fi
   SUFFIX=$1
   shift
-  while IFS= read -r line; do
-    line=$(echo -en "$line")
+  while IFS= read -r -t 10 line; do
+    line=$(echo -en "${line}" | sed 's/\t/        /g')
     cline=$(stripAnsi "${line}")
-    len=${#line}
-    clen=${#cline}
+    len=$(echo "${line}" | wc -c)
+    clen=$(echo "${cline}" | wc -c)
     sublen=${#SUFFIX}
+    lendiff=$((len-clen))
     len=$((len%COLS))
     clen=$((clen%COLS))
     subpad=$((SUBWIDTH-1))
-    pad=$((COLS-clen-SUBWIDTH))
+    pad=$((COLS-len-SUBWIDTH+lendiff))
 #    line=${line//\n/}
-    fulllen=$((clen+pad+subpad))
-    OUT=$(printf "%-${len}s" "${line}")
-    if [ ${subpad} -gt 0 ] && [ ${pad} -gt 0 ] && [ $fulllen -lt $COLS ]; then
-      OUT=${OUT}$(printf "%-${pad}.${pad}s" " ")
-      OUT=${OUT}$(printf "${COLOR}#${WHITE}")
-      OUT=${OUT}$(printf "%${subpad}.${subpad}s${RESET}" " $SUFFIX")
+    fulllen=$((len+pad+subpad))
+    midline=0
+    if [ ${subpad} -gt 0 ] && [ ${pad} -gt 0 ]; then
+      OUT=$(printf "%-${len}.${len}s%-${pad}.${pad}s" "${line}" "${EMPTY}")
+      OUT=${OUT}$(printf "${COLOR}#${WHITE}%${subpad}.${subpad}s${RESET}" "${SUFFIX}")
+    else
+      OUT=$(printf "%-${len}.${len}s" "${line}")
     fi
-    tput sgr0
-    printf -- "${OUT}\n"
-#    printf "$len $clen $pad $subpad $sublen $fulllen\n"
+    printf -- "\r${OUT}\n"
+    if [[ -n ${DEBUG} ]]; then
+      OUT=$(printf "%-${len}.${len}s|%-${pad}.${pad}s|" "${cline}" "")
+      printf "%-$((COLS-SUBWIDTH)).$((COLS-SUBWIDTH))s|${COLOR}#${WHITE}%${subpad}.${subpad}s${RESET}\n" "${OUT}" "${SUFFIX}"
+      printf "$clen/$len+$pad=$((COLS-SUBWIDTH))#$subpad $((clen+pad+sublen))/$fulllen\n"
+    fi
+    OUT=""
   done
-}
-
-function printSuberr() {
-  MODULE=$1
-  shift
-  printSub ERROR $MODULE "${@}"
 }
 
 function printRedir() {
@@ -146,9 +148,9 @@ function printRedir() {
   {
     {
       ${@} 3>&- |
-      printSub  ${MODULE} {} 2>&3 3>&-
+      printSub  ${MODULE} 2>&3 3>&-
     } 2>&1 >&4 4>&- |
-    printSuberr ${MODULE} {} 3>&- 4>&-
+    printSub ERROR ${MODULE} 3>&- 4>&-
   } 3>&2 4>&1
 }
 
@@ -193,20 +195,61 @@ if complete | egrep ' gis$'; then
   exit 1
 fi
 
-if [[ "$(basename $CMD)" == "gist" ]]; then
+ARGS=$(getopt -o ftcd -l "force,top,check,debug" -- "$@");
+if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
+then
+  echo "Usage: gis [options] git-command [git-command-args]"
+  echo -e "\t-f|--force\tForce; skip safety checks."
+  echo -e "\t-t|--top\tExecute the command at the top-most git repo (parent of all modules)."
+  echo -e "\t-c|--check\tCheck; only do safety checks."
+  echo -e "\t-f|--force\tDebug; print debug info."
+  exit 1
+fi
+eval set -- "$ARGS";
+
+DEBUG=
+FORCE=
+GOTOP=
+CHECK=
+while true; do
+  case "$1" in
+    -f|--force)
+      shift;
+      FORCE=1
+    ;;
+    -d|--debug)
+      shift;
+      DEBUG=1
+    ;;
+    -t|--top)
+      shift;
+      GOTOP=1
+    ;;
+    -c|--check)
+      shift;
+      CHECK=1
+    ;;
+    --)
+      shift;
+      break;
+      ;;
+  esac
+done
+
+if [[ -n ${GOTOP} ]]; then
   topExec "${@}"
-elif [[ "$(basename $CMD)" == "gisd" ]]; then
-  submodulesExec ${@}
 elif declare -F $1 >/dev/null; then
   C=$1
   shift
   $C ${@}
 else
-  checkBranches >&2
-  checkModules >&2
-  checkUncommitted >&2
-  if [ ${ERRMSG} -gt 1 ]; then
-    exit $ERRMSG
+  if [[ -z ${FORCE} ]]; then
+    checkBranches >&2
+    checkModules >&2
+    checkUncommitted >&2
+    if [[ ${ERRMSG} -gt 1 ]] || [[ -n ${CHECK} ]]; then
+      exit $ERRMSG
+    fi
   fi
-  submodulesExec ${@}
+  submodulesExec "${@}"
 fi
