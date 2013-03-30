@@ -13,51 +13,64 @@ function shorten() {
 CONTAINS="master testing maint/3.2/master maint/3.2/testing"
 function branches() {
   CHECK_BRANCHES=${@}
+  PADDING=$(for f in ${CHECK_BRANCHES}; do echo $f | wc -c;done | sort -nr | head -n1)
+  PADDING=$((PADDING+2))
   if [[ -z "${@}" ]]; then
     CHECK_BRANCHES=$(git branch | sed 's/\*/ /g' | awk '{print $1}')
   fi
   for f in ${CHECK_BRANCHES}; do
-    basef=$(shorten $f)
-    NOTES="($(git config --get branch.$f.description)$(git notes show $f 2>/dev/null))"
-    HASBRANCH="$(git branch ${BRANCHLOCATION} --contains $f)"
-    if [ $(git tag --contains $f | wc -l) -ne 0 ]; then 
-      HASTAGS=" tags:["$(echo $(git tag --contains maint/3.2/security) | sed 's/ /,/g')"]"; 
-    else
-      HASTAGS=""
-    fi
-    BRANCHES_CONTAINING=""
-    for b in $CONTAINS; do
-      baseb=$(shorten $b | sed 's/\([^\/]\)[^\/]*$/\1/g')
-      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} ${baseb}:"$(echo "${HASBRANCH}"|sed 's/origin\///g' | egrep  ^..$b\$|wc -l)
-    done
-    BRANCHES_CONTAINING="${BRANCHES_CONTAINING} team:$(echo ${HASBRANCH}|egrep team/|wc -l)"
-    BRANCHES_CONTAINING="${BRANCHES_CONTAINING} dev:$(echo ${HASBRANCH}|egrep dev/|grep -v $f|wc -l)"
-    BRANCHES_CONTAINING="${BRANCHES_CONTAINING}${HASTAGS} ${NOTES}"
-    echo "${BRANCHES_CONTAINING}" | 
-    xargs -i echo -n "$(printf %-20.20s ${basef}) {}" | 
-    ( export GREP_COLORS="mt=01"; egrep --color=always '^[^ ]*' ) |
-    ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|[^ ]*:1' ) |
-    ( export GREP_COLORS="mt=00;32"; egrep --color=always '^|[^ ]*:[^01[][0-9]*' ) |
-    ( export GREP_COLORS="mt=00;31"; egrep --color=always '^|[^ ]*:0' ) |
-    ( export GREP_COL
-    ORS="mt=0"; egrep --color=always '^|(dev|team):0' ) |
-    xargs -i echo "{}" |
-    ( export GREP_COLORS="mt=01;37"; egrep --color=always '^[^ ]*' ) |
-    ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|tags:[^ ]*' ) |
-    ( export GREP_COLORS="mt=01;33"; egrep --color=always '^|\(.*\)' )
-    if [ -n "${LOGLINE}" ]; then
-      echo "$(printf '%-21.21s' ' ')$(git -c color.ui=always log --oneline $f | head -n1)"
-    fi
+    basef=$f
+    (
+      NOTES="$(git config --get branch.$f.description)$(git notes show $f 2>/dev/null)"
+      if [[ -n "${NOTES}" ]]; then
+        NOTES="(${NOTES})"
+      fi
+      HASBRANCH="$(git branch ${BRANCHLOCATION} --contains $f)"
+      if [ $(git tag --contains $f | wc -l) -ne 0 ]; then 
+        HASTAGS=" tags:["$(echo $(git tag --contains $f) | sed 's/ /,/g')"]"; 
+      else
+        HASTAGS=""
+      fi
+      BRANCHES_CONTAINING=""
+      for b in $CONTAINS; do
+        baseb=$(shorten $b | sed 's/\([^\/]\)[^\/]*$/\1/g')
+        BRANCHES_CONTAINING="${BRANCHES_CONTAINING} ${baseb}:"$(echo "${HASBRANCH}"|sed 's/origin\///g' | egrep  ^..$b\$|wc -l)
+      done
+      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} team:$(echo ${HASBRANCH}|egrep team/|wc -l)"
+      BRANCHES_CONTAINING="${BRANCHES_CONTAINING} dev:$(echo ${HASBRANCH}|egrep dev/|grep -v $f|wc -l)"
+      BRANCHES_CONTAINING="${BRANCHES_CONTAINING}${HASTAGS} ${NOTES}"
+      if [ -n "${LOGLINE}" ]; then
+        BRANCHES_CONTAINING="${BRANCHES_CONTAINING} $(git -c color.ui=always log --oneline "$f" | head -n1)"
+      fi
+
+      echo "${BRANCHES_CONTAINING}" | 
+      xargs -P20 echo -n "$(printf %-${PADDING}.${PADDING}s ${basef})" | 
+      ( export GREP_COLORS="mt=01"; egrep --color=always '^[^ ]*' ) |
+      ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|[^ ]*:1' ) |
+      ( export GREP_COLORS="mt=00;32"; egrep --color=always '^|[^ ]*:[^01[][0-9]*' ) |
+      ( export GREP_COLORS="mt=00;31"; egrep --color=always '^|[^ ]*:0' ) |
+      ( export GREP_COLORS="mt=0"; egrep --color=always '^|(dev|team):0' ) |
+      ( export GREP_COLORS="mt=01;37"; egrep --color=always '^[^ ]*' ) |
+      ( export GREP_COLORS="mt=01;32"; egrep --color=always '^|tags:[^ ]*' ) |
+      ( export GREP_COLORS="mt=01;33"; egrep --color=always '^|\(.*\)' )
+    )&
   done
+  wait
 }
 
 ARGS=$(getopt -o lra -l "log,remote,all" -- "$@");
 if [ $? -ne 0 ];
 then
+  echo "Usage: git branches [-l] [-a|-r] [branch-ref-pattern]"
+  echo -e "\n\t-l|--log\tShow last commit's log line"
+  echo -e "\t-r|--remote\tShow remote branches"
+  echo -e "\t-a|--all\tShow all branches"
   exit 1
 fi
 eval set -- "$ARGS";
 
+BRANCHLOCATION=
+LOGLINE=
 while true; do
   case "$1" in
     -l|--log)
@@ -82,10 +95,9 @@ done
 
 BRANCHARGS=
 for f in ${@}; do
-  if ! git branch ${BRANCHLOCATION} | egrep '^  '$f >/dev/null 2>&1; then
-    BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | grep $f | sed 's/\*/ /g'))"
-  else
-    BRANCHARGS="${BRANCHARGS} $f"
-  fi
+  BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | egrep "$f" | grep -v HEAD | sed 's/\*/ /g'))"
 done
-branches ${BRANCHARGS}
+if [[ -z "${BRANCHARGS}" ]];then
+  BRANCHARGS="${BRANCHARGS} $(echo $(git branch ${BRANCHLOCATION} | egrep ".*" | grep -v HEAD | sed 's/\*/ /g'))"
+fi
+branches ${BRANCHARGS} | sort
