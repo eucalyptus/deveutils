@@ -18,6 +18,11 @@
 # CA 93117, USA or visit http://www.eucalyptus.com/licenses/ if you need
 # additional information or have any questions.
 
+if [ $# -lt 1 ]; then
+    echo "usage: $(basename $0) [host1 host2 ...]" >&2
+    exit 1
+fi
+
 TOP=$(readlink -f $(dirname $(dirname ${0})))
 CLASSPATH=$(echo $(ls ${TOP}/lib/*.jar | xargs -i echo -n {}:).)
 if [ ${#} -eq 0 ]; then
