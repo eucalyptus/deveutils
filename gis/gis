@@ -112,7 +112,7 @@ function printSub() {
   fi
   SUFFIX=$1
   shift
-  while IFS= read -r -t 10 line; do
+  while IFS= read -r -t 1 line; do
     line=$(echo -en "${line}" | sed 's/\t/        /g')
     cline=$(stripAnsi "${line}")
     len=$(echo "${line}" | wc -c)
@@ -132,7 +132,7 @@ function printSub() {
     else
       OUT=$(printf "%-${len}.${len}s" "${line}")
     fi
-    printf -- "\r${OUT}\n"
+    printf -- "${OUT//%/%%}\n"
     if [[ -n ${DEBUG} ]]; then
       OUT=$(printf "%-${len}.${len}s|%-${pad}.${pad}s|" "${cline}" "")
       printf "%-$((COLS-SUBWIDTH)).$((COLS-SUBWIDTH))s|${COLOR}#${WHITE}%${subpad}.${subpad}s${RESET}\n" "${OUT}" "${SUFFIX}"
@@ -195,7 +195,8 @@ if complete | egrep ' gis$'; then
   exit 1
 fi
 
-ARGS=$(getopt -o ftcd -l "force,top,check,debug" -- "$@");
+# ARGS=$(getopt -o ftcd -l "force,top,check,debug" -- "$@");
+# if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
 if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
 then
   echo "Usage: gis [options] git-command [git-command-args]"
@@ -205,36 +206,34 @@ then
   echo -e "\t-f|--force\tDebug; print debug info."
   exit 1
 fi
-eval set -- "$ARGS";
+# eval set -- "$ARGS";
 
 DEBUG=
 FORCE=
 GOTOP=
 CHECK=
-while true; do
-  case "$1" in
-    -f|--force)
-      shift;
-      FORCE=1
+case "$1" in
+  -f|--force)
+    shift;
+    FORCE=1
+  ;;
+  -d|--debug)
+    shift;
+    DEBUG=1
+  ;;
+  -t|--top)
+    shift;
+    GOTOP=1
+  ;;
+  -c|--check)
+    shift;
+    CHECK=1
+  ;;
+  --)
+    shift;
+    break;
     ;;
-    -d|--debug)
-      shift;
-      DEBUG=1
-    ;;
-    -t|--top)
-      shift;
-      GOTOP=1
-    ;;
-    -c|--check)
-      shift;
-      CHECK=1
-    ;;
-    --)
-      shift;
-      break;
-      ;;
-  esac
-done
+esac
 
 if [[ -n ${GOTOP} ]]; then
   topExec "${@}"
