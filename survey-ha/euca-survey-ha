@@ -1,35 +1,37 @@
 #!/bin/bash
 usage(){
   echo "Usage: euca-survey-ha [OPTIONS] [HOST...]"
-  echo -e " -v|--verbose"
-  echo -e " -q|--quick"
-  echo -e " -g|--group-membership"
-  echo -e " -s|--services"
-  echo -e " -h|--hostmap"
-  echo -e " -d|--databases"
-  echo -e " -d|--data"
-  echo -e " -a|--access-key-id"  
+  echo -e "\n Survey the state of various Eucalyptus internals.\n"
+  printf "  %-30.30s %s\n" "-h|--help" "Show this help"
+#  echo -e " -v|--verbose"
+  printf "  %-30.30s %s\n" "-q|--quick" "Run quick checks; hold no locks (currently include group membership, service state, and database connection state)"
+  printf "  %-30.30s %s\n" "-a|--all" "Run all the checks"
+  printf "  %-30.30s %s\n" "-g|--group-membership" "Show the current group membership views for the hosts in the system" 
+  printf "  %-30.30s %s\n" "-H|--hostmap" "Show the current host state including the status bits which indicate whether the system has bootstrapped, has a database and whether the database is synced"
+  printf "  %-30.30s %s\n" "-s|--services" "Check the current service state for discrepancies"
+  printf "  %-30.30s %s\n" "-d|--db-connections" "Check the current database pools for discrepancies (e.g., deactivated connections for active hosts, dead connections to active host, etc.)"
+  printf "  %-30.30s %s\n" "-D|--db-data" "Check the consistency of database data at the scope of table size counts."
+  printf "  %-30.30s %s\n" "-A|--all-db" "Run all the database checks."
+  printf "  %-30.30s %s\n" "-S|--access-key-id" "Access key (will default to the value of AWS_ACCESS_KEY)"  
+  printf "  %-30.30s %s\n" "-I|--access-key-id" "Secret key (will default to the value of AWS_SECRET_KEY)"
   exit 1
 }
 TOP=$(dirname $(readlink -f ${0}))
 EMP="euca-modify-property"
-ARGS=$(getopt -o hvqgsHdDI:S:U: -l "help,verbose,quick,group-membership,services,hostmap,databases,data,access-key-id" -- "$@")
+ARGS=$(getopt -o ahvqgsHdADI:S: -l "all,help,verbose,quick,group-membership,services,hostmap,db-connections,all-db,db-data,access-key-id,secret-key" -- "$@")
 if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
 then
   usage
 fi
 eval set -- "$ARGS"
-VERBOSE=
-QUICK=
-DATABASES=
-DATA=
+
 while true; do
   case "$1" in
     -h|--help)
       shift;
       usage
     ;;
-    -I|--access-key-id)
+    -I|--secret-key)
       shift;
       EC2_ACCESS_KEY=$1
     ;;
@@ -61,11 +63,15 @@ while true; do
       shift;
       GMS=1
     ;;
-    -d|--databases)
+    -d|--db-connections)
       shift;
       DATABASES=1
     ;;
-    -D|--data)
+    -D|--db-data)
+      shift;
+      DATATABLES=1
+    ;;
+    -A|--all-db)
       shift;
       DATABASES=1
       DATA=1
@@ -118,10 +124,10 @@ for HOST in $HOSTS; do
   if [[ -n "${QUICK}" ]];then
     runCommand scripts/list-gms-status.groovy
     runCommand scripts/list-db-status.groovy
-    runCommand scripts/compare-service-states.groovy
+    runCommand scripts/list-service-states.groovy
   else
     if [[ -n "${SERVICES}" ]]; then
-      runCommand scripts/compare-service-states.groovy
+      runCommand scripts/list-service-states.groovy
     fi
     if [[ -n "${HOSTMAP}" ]]; then
       runCommand scripts/list-hostmap-status.groovy
