@@ -1,0 +1,139 @@
+#!/bin/bash
+usage(){
+  echo "Usage: euca-survey-ha [OPTIONS] [HOST...]"
+  echo -e " -v|--verbose"
+  echo -e " -q|--quick"
+  echo -e " -g|--group-membership"
+  echo -e " -s|--services"
+  echo -e " -h|--hostmap"
+  echo -e " -d|--databases"
+  echo -e " -d|--data"
+  echo -e " -a|--access-key-id"  
+  exit 1
+}
+TOP=$(dirname $(readlink -f ${0}))
+EMP="euca-modify-property"
+ARGS=$(getopt -o hvqgsHdDI:S:U: -l "help,verbose,quick,group-membership,services,hostmap,databases,data,access-key-id" -- "$@")
+if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
+then
+  usage
+fi
+eval set -- "$ARGS"
+VERBOSE=
+QUICK=
+DATABASES=
+DATA=
+while true; do
+  case "$1" in
+    -h|--help)
+      shift;
+      usage
+    ;;
+    -I|--access-key-id)
+      shift;
+      EC2_ACCESS_KEY=$1
+    ;;
+    -S|--access-key-id)
+      shift;
+      EC2_SECRET_KEY=$1
+    ;;
+    -U|--url)
+      shift;
+      EC2_URL=$1
+    ;;
+    -v|--verbose)
+      shift;
+      VERBOSE=1
+    ;;
+    -q|--quick)
+      shift;
+      QUICK=1
+    ;;
+    -s|--services)
+      shift;
+      SERVICES=1
+    ;;
+    -H|--hostmap)
+      shift;
+      HOSTMAP=1
+    ;;
+    -g|--group-membership)
+      shift;
+      GMS=1
+    ;;
+    -d|--databases)
+      shift;
+      DATABASES=1
+    ;;
+    -D|--data)
+      shift;
+      DATABASES=1
+      DATA=1
+    ;;
+    -a|--all)
+      shift;
+      DATABASES=1
+      DATA=1
+      GMS=1
+      SERVICES=1
+      HOSTMAP=1
+      unset QUICK
+    ;;
+    --)
+      shift;
+      break;
+      ;;
+  esac
+done
+
+if [[ -z "${EC2_URL}" ]]; then 
+  echo "Failed to find service url."
+  exit 1
+elif [[ -z "${EC2_ACCESS_KEY}" ]]; then
+  echo "Failed to find access key."
+  exit 1
+elif [[ -z "${EC2_SECRET_KEY}" ]]; then
+  echo "Failed to find secret key."
+  exit 1
+elif ! which euca-modify-property >/dev/null 2>&1; then
+  echo "Failed to find ${EMP} in PATH."
+  exit 1
+fi
+
+runCommand() {
+  ${EMP} -I ${EC2_ACCESS_KEY} -S ${EC2_SECRET_KEY} -U ${EC2_URL} -f euca=${TOP}/$1 \
+  | sed 's/was executed successfully.$//g' \
+  | sed 's/PROPERTY[ \t]*euca//g' \
+  | xargs -i echo "${HOST} $(basename ${1//.groovy/}) {}" 
+}
+
+if [[ -z "${@}" ]];then
+  HOSTS=$(echo $(euca-describe-services | grep -v cluster  | awk '{print $7}' | sed 's/http:\/\/\([0-9.]*\):877.\/.*/\1/g' | sort | uniq))
+else
+  HOSTS=${@}
+fi
+for HOST in $HOSTS; do
+  HOST=${HOST//:8773/}
+  export EC2_URL="http://$HOST:8773/services/Eucalyptus"
+  if [[ -n "${QUICK}" ]];then
+    runCommand scripts/list-gms-status.groovy
+    runCommand scripts/list-db-status.groovy
+    runCommand scripts/compare-service-states.groovy
+  else
+    if [[ -n "${SERVICES}" ]]; then
+      runCommand scripts/compare-service-states.groovy
+    fi
+    if [[ -n "${HOSTMAP}" ]]; then
+      runCommand scripts/list-hostmap-status.groovy
+    fi
+    if [[ -n "${GMS}" ]];then
+      runCommand scripts/list-gms-status.groovy
+    fi
+    if [[ -n "${DATABASES}" ]];then
+      runCommand scripts/list-db-status.groovy
+    fi
+    if [[ -n "${DATA}" ]];then
+      runCommand scripts/list-db-status.groovy
+    fi
+  fi
+done
