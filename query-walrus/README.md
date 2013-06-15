@@ -1,25 +1,29 @@
+#Query-Walrus
+
 Queries Walrus DB entities directly to get info not available from the API endpoint. Resolves files on the filesystem to buckets and objects.
 
 Requirements to run:
-$EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
+* $EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
 source install it is whatever --with-prefix was set to during ./configure time of the source build.
 
-The Eucalyptus SC must be running on the local host.
-You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file
+* The Eucalyptus Walrus component must be running on the local host.
+* You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file
 on the local host (SC) after modifying the EC2_URL line to refer to the current local IP instead of the CLC.
 
+##Usage
 
 usage: query-walrus <sub-command> <options>
 
-Sub-commands:
-lookup-object-from-file <file path from $EUCALYPTUS/var/lib/eucalyptus/bukkits> : given the bucket/filename it returns the object key and bucket as well as object info for the file
-lookup-file-from-object <bucket/object key> : given the bucket/object-key it displays where that object is stored on the filesystem relative to $EUCALYPTUS/var/lib/eucalyptus/bukkits
-lookup-snapshot-from-file <bucket/snapshot_file_path> : returns the snapshotId and info that correspond to the file on the filesystem 
-lookup-file-from-snapshot <snap-Id> : returns the bucket and file that represent the given snapshot on Walrus
-list-bucket <bucket> : lists all objects in the bucket including object keys and the files that correspond to those keys
-list-cached-images : lists all images currently in the Walrus image cache as well as the files that correspond to the constructed and cached images
+###Sub-commands:
+*lookup-object-from-file <file path from $EUCALYPTUS/var/lib/eucalyptus/bukkits> : given the bucket/filename it returns the object key and bucket as well as object info for the file
+*lookup-file-from-object <bucket/object key> : given the bucket/object-key it displays where that object is stored on the filesystem relative to $EUCALYPTUS/var/lib/eucalyptus/bukkits
+*lookup-snapshot-from-file <bucket/snapshot_file_path> : returns the snapshotId and info that correspond to the file on the filesystem 
+*lookup-file-from-snapshot <snap-Id> : returns the bucket and file that represent the given snapshot on Walrus
+*list-bucket <bucket> : lists all objects in the bucket including object keys and the files that correspond to those keys
+*list-cached-images : lists all images currently in the Walrus image cache as well as the files that correspond to the constructed and cached images
 
 For all sub-commands that take a file as input, use the path relative to the 'bukkits' directory.
+
 For all sub-commands that take an object key, include the bucket/object-key path
 
 ##Examples:
