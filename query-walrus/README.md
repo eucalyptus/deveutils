@@ -1,5 +1,3 @@
-#Query-Walrus
-
 Queries Walrus DB entities directly to get info not available from the API endpoint. Resolves files on the filesystem to buckets and objects.
 
 Requirements to run:
