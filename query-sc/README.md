@@ -1,6 +1,9 @@
 Lists the volume state from the SC database from either the 'frontend' or 'backend' of the storage controller.
 
 Requirements to run:
+* Eucalyptus binaries installed
+* EucaAdmin tools must be installed (euca-modify-property must work)
+* Credentials: see next
 * $EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
 source install it is whatever --with-prefix was set to during ./configure time of the source build.
 
