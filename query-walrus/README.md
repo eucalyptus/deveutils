@@ -1,5 +1,14 @@
 Queries Walrus DB entities directly to get info not available from the API endpoint. Resolves files on the filesystem to buckets and objects.
 
+Requirements to run:
+$EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
+source install it is whatever --with-prefix was set to during ./configure time of the source build.
+
+The Eucalyptus SC must be running on the local host.
+You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file
+on the local host (SC) after modifying the EC2_URL line to refer to the current local IP instead of the CLC.
+
+
 usage: query-walrus <sub-command> <options>
 
 Sub-commands:
