@@ -16,12 +16,12 @@ on the local host (SC) after modifying the EC2_URL line to refer to the current 
 usage: query-walrus <sub-command> <options>
 
 ###Sub-commands:
-*lookup-object-from-file <file path from $EUCALYPTUS/var/lib/eucalyptus/bukkits> : given the bucket/filename it returns the object key and bucket as well as object info for the file
-*lookup-file-from-object <bucket/object key> : given the bucket/object-key it displays where that object is stored on the filesystem relative to $EUCALYPTUS/var/lib/eucalyptus/bukkits
-*lookup-snapshot-from-file <bucket/snapshot_file_path> : returns the snapshotId and info that correspond to the file on the filesystem 
-*lookup-file-from-snapshot <snap-Id> : returns the bucket and file that represent the given snapshot on Walrus
-*list-bucket <bucket> : lists all objects in the bucket including object keys and the files that correspond to those keys
-*list-cached-images : lists all images currently in the Walrus image cache as well as the files that correspond to the constructed and cached images
+* lookup-object-from-file <file path from $EUCALYPTUS/var/lib/eucalyptus/bukkits> : given the bucket/filename it returns the object key and bucket as well as object info for the file
+* lookup-file-from-object <bucket/object key> : given the bucket/object-key it displays where that object is stored on the filesystem relative to $EUCALYPTUS/var/lib/eucalyptus/bukkits
+* lookup-snapshot-from-file <bucket/snapshot_file_path> : returns the snapshotId and info that correspond to the file on the filesystem 
+* lookup-file-from-snapshot <snap-Id> : returns the bucket and file that represent the given snapshot on Walrus
+* list-bucket <bucket> : lists all objects in the bucket including object keys and the files that correspond to those keys
+* list-cached-images : lists all images currently in the Walrus image cache as well as the files that correspond to the constructed and cached images
 
 For all sub-commands that take a file as input, use the path relative to the 'bukkits' directory.
 
