@@ -21,4 +21,4 @@ Requirements to run:
 * You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file on the local host (SC) after modifying the EC2_URL line to refer to the current local IP instead of the CLC.
 
 ##Usage
-unexport-volume <volumeId>
+    unexport-volume <volumeId>
