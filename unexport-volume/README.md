@@ -1,6 +1,6 @@
 Forcibly unexports the specified volume. Invalidates all tokens and export records for the volume.
 
-This utility should be used with *EXTREME* caution as it changes the state of Eucalyptus and may result
+This utility should be used with **EXTREME** caution as it changes the state of Eucalyptus and may result
 in corruption of a volume if run while a volume is attached and being used for IO by a VM.
 
 The appropriate use of this utility is, for example, when a volume is stuck in 'deleting' state and the
@@ -13,6 +13,7 @@ unable to actually perform the unexport operation. This utility cleans the Eucal
 the volume and invokes the normal unexport mechanisms.
 
 Requirements to run:
+* Eucalyptus 3.3.0+ Eucalyptus 3.2.x will cause these utilities to fail due to changes in internal structures
 * Eucalyptus binaries installed
 * EucaAdmin tools must be installed (euca-modify-property must work)
 * Credentials: see next
