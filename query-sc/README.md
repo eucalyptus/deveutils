@@ -1,6 +1,7 @@
 Lists the volume state from the SC database from either the 'frontend' or 'backend' of the storage controller.
 
 Requirements to run:
+* Eucalyptus 3.3.0+ Eucalyptus 3.2.x will cause these utilities to fail due to changes in internal structures
 * Eucalyptus binaries installed
 * EucaAdmin tools must be installed (euca-modify-property must work)
 * Credentials: see next
