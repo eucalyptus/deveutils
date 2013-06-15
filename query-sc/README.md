@@ -1,19 +1,19 @@
 Lists the volume state from the SC database from either the 'frontend' or 'backend' of the storage controller.
 
 Requirements to run:
-$EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
+* $EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
 source install it is whatever --with-prefix was set to during ./configure time of the source build.
 
-The Eucalyptus SC must be running on the local host.
-You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file
+* The Eucalyptus SC must be running on the local host.
+* You must have admin credentials for the Eucalyptus install and have EC2_URL set to the local host. The easiest way to accomplish this is to source the eucarc file
 on the local host (SC) after modifying the EC2_URL line to refer to the current local IP instead of the CLC.
 
-The SC has two sides, the 'frontend' and the 'backend'. The frontend handles the logical entities in EBS: volumes and snapshots. The backend is responsible for
+* The SC has two sides, the 'frontend' and the 'backend'. The frontend handles the logical entities in EBS: volumes and snapshots. The backend is responsible for
 implementing those entities on the specific backend that is configured for use on this SC. It maps Volumes to SAN LUNs, or TGT targets, etc.
 
-To list volumes as seen by the 'frontend' use the sub-command: list-volumes.
+##Usage
 
-Example usage of listing frontend volumes (list-volumes):
+###Example usage of listing frontend volumes (list-volumes):
 
     >query-sc list-volumes
     Listing volumes from SC frontend (logical)
@@ -47,9 +47,7 @@ The 'token' field is a redacted version of the token used for export/unexport du
 however, there should only ever be one 'Is Valid' token, and up to two 'Is Active' exports per volume. The only time more than one export may be active is during the process of VM
 migration.
 
-To list volumes as seen by the 'backend', use the sub-command: list-backend-volumes.
-
-Example usage of listing backend volumes on a TGT-based SC (list-backend-volumes);
+###Example usage of listing backend volumes on a TGT-based SC (list-backend-volumes);
 
     > ./query-sc list-backend-volumes
     Listing volumes from SC backend (SAN/TGT)
