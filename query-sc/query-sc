@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ -z $EUCALYPTUS ]
+then
+        echo "\$EUCALYPTUS must be set to home directory of euca installation on this host."
+        exit 1
+fi
+
+if [ -z $1 ]
+then
+        echo "Usage: query-sc <command> <additional parameters>"
+        exit 1
+fi
+
+usr_command=$1
+list_volume_file="lib/list_volumes.groovy"
+list_volume_backend_file="lib/list_backend_volumes.groovy"
+
+case "$usr_command" in
+list-volumes) echo "Listing volumes from SC frontend (logical)"
+        command_file=$list_volume_file
+        $EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$command_file
+        ;;
+
+list-backend-volumes) echo "Listing volumes from SC backend (SAN/TGT)"
+        command_file=$list_volume_backend_file
+        $EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$command_file
+        ;;
+
+*) echo "Unknown command"
+        exit 1
+esac
+	
+
+
