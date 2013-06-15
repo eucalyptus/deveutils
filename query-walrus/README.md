@@ -1,6 +1,9 @@
 Queries Walrus DB entities directly to get info not available from the API endpoint. Resolves files on the filesystem to buckets and objects.
 
 Requirements to run:
+* Eucalyptus binaries installed
+* EucaAdmin tools must be installed (euca-modify-property must work)
+* Credentials: see next
 * $EUCALYPTUS must be set to the root directory of the eucalyptus installation on the local host. For a package install, that is usually '/'. For a
 source install it is whatever --with-prefix was set to during ./configure time of the source build.
 
