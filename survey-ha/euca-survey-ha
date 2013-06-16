@@ -1,0 +1,145 @@
+#!/bin/bash
+usage(){
+  echo "Usage: euca-survey-ha [OPTIONS] [HOST...]"
+  echo -e "\n Survey the state of various Eucalyptus internals.\n"
+  printf "  %-30.30s %s\n" "-h|--help" "Show this help"
+#  echo -e " -v|--verbose"
+  printf "  %-30.30s %s\n" "-q|--quick" "Run quick checks; hold no locks (currently include group membership, service state, and database connection state)"
+  printf "  %-30.30s %s\n" "-a|--all" "Run all the checks"
+  printf "  %-30.30s %s\n" "-g|--group-membership" "Show the current group membership views for the hosts in the system" 
+  printf "  %-30.30s %s\n" "-H|--hostmap" "Show the current host state including the status bits which indicate whether the system has bootstrapped, has a database and whether the database is synced"
+  printf "  %-30.30s %s\n" "-s|--services" "Check the current service state for discrepancies"
+  printf "  %-30.30s %s\n" "-d|--db-connections" "Check the current database pools for discrepancies (e.g., deactivated connections for active hosts, dead connections to active host, etc.)"
+  printf "  %-30.30s %s\n" "-D|--db-data" "Check the consistency of database data at the scope of table size counts."
+  printf "  %-30.30s %s\n" "-A|--all-db" "Run all the database checks."
+  printf "  %-30.30s %s\n" "-S|--access-key-id" "Access key (will default to the value of AWS_ACCESS_KEY)"  
+  printf "  %-30.30s %s\n" "-I|--access-key-id" "Secret key (will default to the value of AWS_SECRET_KEY)"
+  exit 1
+}
+TOP=$(dirname $(readlink -f ${0}))
+EMP="euca-modify-property"
+ARGS=$(getopt -o ahvqgsHdADI:S: -l "all,help,verbose,quick,group-membership,services,hostmap,db-connections,all-db,db-data,access-key-id,secret-key" -- "$@")
+if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
+then
+  usage
+fi
+eval set -- "$ARGS"
+
+while true; do
+  case "$1" in
+    -h|--help)
+      shift;
+      usage
+    ;;
+    -I|--secret-key)
+      shift;
+      EC2_ACCESS_KEY=$1
+    ;;
+    -S|--access-key-id)
+      shift;
+      EC2_SECRET_KEY=$1
+    ;;
+    -U|--url)
+      shift;
+      EC2_URL=$1
+    ;;
+    -v|--verbose)
+      shift;
+      VERBOSE=1
+    ;;
+    -q|--quick)
+      shift;
+      QUICK=1
+    ;;
+    -s|--services)
+      shift;
+      SERVICES=1
+    ;;
+    -H|--hostmap)
+      shift;
+      HOSTMAP=1
+    ;;
+    -g|--group-membership)
+      shift;
+      GMS=1
+    ;;
+    -d|--db-connections)
+      shift;
+      DATABASES=1
+    ;;
+    -D|--db-data)
+      shift;
+      DATATABLES=1
+    ;;
+    -A|--all-db)
+      shift;
+      DATABASES=1
+      DATA=1
+    ;;
+    -a|--all)
+      shift;
+      DATABASES=1
+      DATA=1
+      GMS=1
+      SERVICES=1
+      HOSTMAP=1
+      unset QUICK
+    ;;
+    --)
+      shift;
+      break;
+      ;;
+  esac
+done
+
+if [[ -z "${EC2_URL}" ]]; then 
+  echo "Failed to find service url."
+  exit 1
+elif [[ -z "${EC2_ACCESS_KEY}" ]]; then
+  echo "Failed to find access key."
+  exit 1
+elif [[ -z "${EC2_SECRET_KEY}" ]]; then
+  echo "Failed to find secret key."
+  exit 1
+elif ! which euca-modify-property >/dev/null 2>&1; then
+  echo "Failed to find ${EMP} in PATH."
+  exit 1
+fi
+
+runCommand() {
+  ${EMP} -I ${EC2_ACCESS_KEY} -S ${EC2_SECRET_KEY} -U ${EC2_URL} -f euca=${TOP}/$1 \
+  | sed 's/was executed successfully.$//g' \
+  | sed 's/PROPERTY[ \t]*euca//g' \
+  | xargs -i echo "${HOST} $(basename ${1//.groovy/}) {}" 
+}
+
+if [[ -z "${@}" ]];then
+  HOSTS=$(echo $(euca-describe-services | grep -v cluster  | awk '{print $7}' | sed 's/http:\/\/\([0-9.]*\):877.\/.*/\1/g' | sort | uniq))
+else
+  HOSTS=${@}
+fi
+for HOST in $HOSTS; do
+  HOST=${HOST//:8773/}
+  export EC2_URL="http://$HOST:8773/services/Eucalyptus"
+  if [[ -n "${QUICK}" ]];then
+    runCommand scripts/list-gms-status.groovy
+    runCommand scripts/list-db-status.groovy
+    runCommand scripts/list-service-states.groovy
+  else
+    if [[ -n "${SERVICES}" ]]; then
+      runCommand scripts/list-service-states.groovy
+    fi
+    if [[ -n "${HOSTMAP}" ]]; then
+      runCommand scripts/list-hostmap-status.groovy
+    fi
+    if [[ -n "${GMS}" ]];then
+      runCommand scripts/list-gms-status.groovy
+    fi
+    if [[ -n "${DATABASES}" ]];then
+      runCommand scripts/list-db-status.groovy
+    fi
+    if [[ -n "${DATA}" ]];then
+      runCommand scripts/list-db-status.groovy
+    fi
+  fi
+done
