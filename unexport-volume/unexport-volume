@@ -1,0 +1,29 @@
+#!/bin/bash
+# Forcibly unexports a volume directly from the backend of the storage controller on the local host.
+# USE WITH EXTREME CAUTION! See the README.md for more info on when using this is acceptible.
+# This command WILL change internal Eucalyptus state! BE EXTREMELY CAUTIOUS!
+
+if [ -z $EUCALYPTUS ]
+then
+        echo "\$EUCALYPTUS must be set to home directory of euca installation on this host."
+        exit 1
+fi
+
+if [ -z $1 ]
+then
+        echo "Usage: unexport-volume <vol-ID>"
+        exit 1
+fi
+
+volume=$1
+unexport_volume_file="lib/unexport_volume.groovy"
+
+echo "Unexporting volume $1"
+replace_string="CHANGEME"
+unexport_volume_file_tmp="$unexport_volume_file.tmp"
+sed s/$replace_string/$2/ $unexport_volume_file > $unexport_volume_file_tmp
+command_file=$unexport_volume_file_tmp
+$EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$command_file
+rm $unexport_volume_file_tmp
+
+echo Operation Complete

@@ -1,0 +1,104 @@
+#!/bin/bash
+#Runs various query commands against the Walrus DB directly to resolve file paths and snapshots with objects.
+
+usage="query-walrus [lookup-object-from-file|lookup-file-from-object|lookup-snapshot-from-file|lookup-file-from-snapshot|list-bucket|list-cached-images] <object|snapshot|filepath>"
+function run_with_parameter {
+  if [ -z $1 ] || [ -z $2 ]
+  then
+    echo "Command and param must be specified."
+    return
+  fi
+
+  command_file=$1
+  param=$( echo $2 | sed 's/\//\\\//g' )
+  replace_string="CHANGEME"
+  command_file_tmp="$command_file.tmp"
+  sed "s/$replace_string/$param/g" $command_file > $command_file_tmp
+  $EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$command_file_tmp
+  rm $command_file_tmp
+}
+
+if [ -z $EUCALYPTUS ]
+then
+        echo "\$EUCALYPTUS' must be set to home directory of euca installation on this host."
+        exit 1
+fi
+
+if [ -z $1 ]
+then
+        echo $usage
+        exit 1
+fi
+
+usr_command=$1
+
+lookup_object_from_file_file="lib/walrus-lookup-object-from-file.groovy"
+lookup_file_from_object_file="lib/walrus-lookup-file-from-object.groovy"
+lookup_snapshot_from_file_file="lib/walrus-lookup-snapshot-from-file.groovy"
+lookup_file_from_snap_file="lib/walrus-lookup-file-from-snapshot.groovy"
+list_cached_images_file="lib/walrus-list-cached-images.groovy"
+list_bucket_file="lib/walrus-list-bucket.groovy"
+
+case "$usr_command" in
+help) echo $usage
+	;;
+
+lookup-object-from-file)
+        if [ -z $2 ]
+        then
+                echo "Must specify a file path"
+                exit 1
+        fi
+
+        run_with_parameter $lookup_object_from_file_file $2
+        ;;
+
+lookup-file-from-object)
+        if [ -z $2 ]
+        then
+                echo "Must specify a bucket/object"
+                exit 1
+        fi
+
+        run_with_parameter $lookup_file_from_object_file $2
+        ;;
+
+lookup-snapshot-from-file) 
+        if [ -z $2 ]
+        then
+                echo "Must specify a file path"
+                exit 1
+        fi
+
+        run_with_parameter $lookup_snapshot_from_file_file $2
+        ;;
+
+lookup-file-from-snapshot) 
+        if [ -z $2 ]
+        then
+                echo "Must specify a snapshot id"
+                exit 1
+        fi
+
+        run_with_parameter $lookup_file_from_snap_file $2
+        ;;
+
+list-cached-images) 
+
+  	$EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$list_cached_images_file
+        ;;
+
+list-bucket) 
+        if [ -z $2 ]
+        then
+                echo "Must specify a bucket"
+                exit 1
+        fi
+
+        run_with_parameter $list_bucket_file $2
+        ;;
+
+*) echo "Unknown command"
+        exit 1
+esac
+
