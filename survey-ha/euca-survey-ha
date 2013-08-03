@@ -19,7 +19,7 @@ usage(){
 }
 TOP=$(dirname $(readlink -f ${0}))
 EMP="euca-modify-property"
-ARGS=$(getopt -o ahvqgsHdADI:S: -l "all,help,verbose,quick,group-membership,services,hostmap,db-connections,all-db,db-data,access-key-id,secret-key" -- "$@")
+ARGS=$(getopt -o ahvqgsHdADTI:S: -l "all,help,verbose,quick,group-membership,services,hostmap,db-connections,db-threads,all-db,db-data,access-key-id,secret-key" -- "$@")
 if [[ $? -ne 0 ]] || [[ ${#} -eq 0 ]];
 then
   usage
