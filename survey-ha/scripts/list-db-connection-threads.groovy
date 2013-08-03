@@ -2,7 +2,8 @@ import org.logicalcobwebs.proxool.ConnectionPoolManager
 import org.logicalcobwebs.proxool.ProxyConnection
 import com.eucalyptus.entities.PersistenceContexts;
 
-PersistenceContexts.list( ).collect{ ctx ->
+//PersistenceContexts.list( ).collect{ ctx ->
+ctx = "eucalyptus_cloud"
   ConnectionPoolManager.getInstance().getConnectionPool(ctx).getProxyConnections( ).collect{ ProxyConnection p ->
     stack = Thread.getAllStackTraces( ).findAll{ thread -> thread?.getKey()?.getName( ) == p.getRequester( ) }.collect{ Arrays.asList(it.getValue()) }
     """
@@ -11,4 +12,4 @@ ${p.id} last-sql=${p.getLastSqlCall( )}
 ${p.id} owning-thread=${p.getRequester( )}
 ${p.id} """ + stack.collect{it.join("\n\t")}
   }
-}
+//}
