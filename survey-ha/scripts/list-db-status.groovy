@@ -8,7 +8,7 @@ import com.eucalyptus.entities.PersistenceContexts
 import com.eucalyptus.util.Mbeans
 import com.google.common.collect.ImmutableMap
 
-def verbose = false;
+def verbose = true;
 def lookupCluster = { ctx ->
   Mbeans.lookup( Databases.jdbcJmxDomain,
       ImmutableMap.builder( ).put( "cluster", ctx ).build( ),
