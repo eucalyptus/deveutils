@@ -144,7 +144,7 @@ for HOST in $HOSTS; do
       runCommand scripts/list-db-status.groovy
     fi
     if [[ -n "${DBTHREADS}" ]];then
-      runCommand scripts/list-db-status.groovy
+      runCommand scripts/list-db-connection-threads.groovy
     fi
     if [[ -n "${DATA}" ]];then
       runCommand scripts/list-db-status.groovy
