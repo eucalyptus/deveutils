@@ -3,12 +3,13 @@ usage(){
   echo "Usage: euca-survey-ha [OPTIONS] [HOST...]"
   echo -e "\n Survey the state of various Eucalyptus internals.\n"
   printf "  %-30.30s %s\n" "-h|--help" "Show this help"
-#  echo -e " -v|--verbose"
+  printf "  %-30.30s %s\n" "-v|--verbose" "Be versbose"
   printf "  %-30.30s %s\n" "-q|--quick" "Run quick checks; hold no locks (currently include group membership, service state, and database connection state)"
   printf "  %-30.30s %s\n" "-a|--all" "Run all the checks"
   printf "  %-30.30s %s\n" "-g|--group-membership" "Show the current group membership views for the hosts in the system" 
   printf "  %-30.30s %s\n" "-H|--hostmap" "Show the current host state including the status bits which indicate whether the system has bootstrapped, has a database and whether the database is synced"
   printf "  %-30.30s %s\n" "-s|--services" "Check the current service state for discrepancies"
+  printf "  %-30.30s %s\n" "-T|--db-threads" "Print the status of each database connection and the stack trace for the owning thread if available"
   printf "  %-30.30s %s\n" "-d|--db-connections" "Check the current database pools for discrepancies (e.g., deactivated connections for active hosts, dead connections to active host, etc.)"
   printf "  %-30.30s %s\n" "-D|--db-data" "Check the consistency of database data at the scope of table size counts."
   printf "  %-30.30s %s\n" "-A|--all-db" "Run all the database checks."
@@ -54,6 +55,10 @@ while true; do
     -s|--services)
       shift;
       SERVICES=1
+    ;;
+    -T|--db-threads)
+      shift;
+      DBTHREADS=1
     ;;
     -H|--hostmap)
       shift;
@@ -136,6 +141,9 @@ for HOST in $HOSTS; do
       runCommand scripts/list-gms-status.groovy
     fi
     if [[ -n "${DATABASES}" ]];then
+      runCommand scripts/list-db-status.groovy
+    fi
+    if [[ -n "${DBTHREADS}" ]];then
       runCommand scripts/list-db-status.groovy
     fi
     if [[ -n "${DATA}" ]];then
