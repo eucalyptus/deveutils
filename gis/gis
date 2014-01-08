@@ -112,7 +112,7 @@ function printSub() {
   fi
   SUFFIX=$1
   shift
-  while IFS= read -r -t 1 line; do
+  while IFS= read -e -r -t 10 line; do
     line=$(echo -en "${line}" | sed 's/\t/        /g')
     cline=$(stripAnsi "${line}")
     len=$(echo "${line}" | wc -c)
