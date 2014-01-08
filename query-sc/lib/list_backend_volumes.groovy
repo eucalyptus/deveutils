@@ -1,13 +1,14 @@
-import edu.ucsb.eucalyptus.cloud.entities.VolumeInfo;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeToken;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeExportRecord;
-import edu.ucsb.eucalyptus.cloud.entities.ISCSIVolumeInfo;
-import edu.ucsb.eucalyptus.cloud.entities.LVMVolumeInfo;
+import com.eucalyptus.blockstorage.entities.VolumeInfo;
+import com.eucalyptus.blockstorage.entities.VolumeToken;
+import com.eucalyptus.blockstorage.entities.VolumeExportRecord;
+import com.eucalyptus.blockstorage.entities.ISCSIVolumeInfo;
+import com.eucalyptus.blockstorage.entities.LVMVolumeInfo;
+import com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;
-import com.eucalyptus.storage.StorageManagers;
-import com.eucalyptus.storage.DASManager;
+import com.eucalyptus.blockstorage.StorageManagers;
+import com.eucalyptus.blockstorage.DASManager;
 
 //Lists all the volumes, their status, tokens, and export records
 def listVolumesTGT() {
@@ -45,7 +46,7 @@ def printLVMFields(LVMVolumeInfo vol) {
 	return output.toString();
 }
 
-def printSANFields(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol) {
+def printSANFields(SANVolumeInfo vol) {
 	StringBuilder output = new StringBuilder();
 	output.append(' VolumeId:' + vol.getVolumeId());
 	output.append(' Status:' + vol.getStatus());
@@ -57,9 +58,9 @@ def printSANFields(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol) {
 
 def listVolumesSAN() {
 	StringBuilder listingString = new StringBuilder("Backend-TGT Volume listing:\n");
-	EntityTransaction db = Entities.get(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo.class);
-	edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo searchVol = Groovyness.expandoMetaClass(new edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo());
-	edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol = null;
+	EntityTransaction db = Entities.get(SANVolumeInfo.class);
+	SANVolumeInfo searchVol = Groovyness.expandoMetaClass(new SANVolumeInfo());
+	SANVolumeInfo vol = null;
 	Entities.query(searchVol).each{ volume ->
 		vol= Groovyness.expandoMetaClass(volume);
 		listingString.append('Volume: ' + volume.getVolumeId());
