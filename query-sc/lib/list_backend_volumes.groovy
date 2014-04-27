@@ -1,13 +1,14 @@
-import edu.ucsb.eucalyptus.cloud.entities.VolumeInfo;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeToken;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeExportRecord;
-import edu.ucsb.eucalyptus.cloud.entities.ISCSIVolumeInfo;
-import edu.ucsb.eucalyptus.cloud.entities.LVMVolumeInfo;
+import com.eucalyptus.blockstorage.entities.VolumeInfo;
+import com.eucalyptus.blockstorage.entities.VolumeToken;
+import com.eucalyptus.blockstorage.entities.VolumeExportRecord;
+import com.eucalyptus.blockstorage.entities.ISCSIVolumeInfo;
+import com.eucalyptus.blockstorage.entities.LVMVolumeInfo;
+import com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;
-import com.eucalyptus.storage.StorageManagers;
-import com.eucalyptus.storage.DASManager;
+import com.eucalyptus.blockstorage.StorageManagers;
+import com.eucalyptus.blockstorage.DASManager;
 
 //Lists all the volumes, their status, tokens, and export records
 def listVolumesTGT() {

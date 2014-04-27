@@ -5,7 +5,7 @@ import com.eucalyptus.scripting.Groovyness;
 
 volume="CHANGEME";
 
-//Mark the volume as deletion
+//Mark the volume for deletion
 def markForDelete() {	
     StringBuilder output = new StringBuilder();
     EntityTransaction db = Entities.get(VolumeInfo.class);
