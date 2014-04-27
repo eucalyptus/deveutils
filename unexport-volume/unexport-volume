@@ -21,7 +21,7 @@ unexport_volume_file="lib/unexport_volume.groovy"
 echo "Unexporting volume $1"
 replace_string="CHANGEME"
 unexport_volume_file_tmp="$unexport_volume_file.tmp"
-sed s/$replace_string/$2/ $unexport_volume_file > $unexport_volume_file_tmp
+sed s/$replace_string/$1/ $unexport_volume_file > $unexport_volume_file_tmp
 command_file=$unexport_volume_file_tmp
 $EUCALYPTUS/usr/sbin/euca-modify-property -f euca=$command_file
 rm $unexport_volume_file_tmp
