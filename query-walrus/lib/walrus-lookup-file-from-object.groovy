@@ -1,4 +1,4 @@
-import edu.ucsb.eucalyptus.cloud.entities.ObjectInfo;
+import com.eucalyptus.objectstorage.entities.ObjectInfo;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;

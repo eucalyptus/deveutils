@@ -1,5 +1,5 @@
-import edu.ucsb.eucalyptus.cloud.entities.WalrusSnapshotInfo;
-import edu.ucsb.eucalyptus.cloud.entities.ObjectInfo;
+import com.eucalyptus.objectstorage.entities.WalrusSnapshotInfo;
+import com.eucalyptus.objectstorage.entities.ObjectInfo;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;
