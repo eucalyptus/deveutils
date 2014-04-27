@@ -46,7 +46,7 @@ def printLVMFields(LVMVolumeInfo vol) {
 	return output.toString();
 }
 
-def printSANFields(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol) {
+def printSANFields(com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo vol) {
 	StringBuilder output = new StringBuilder();
 	output.append(' VolumeId:' + vol.getVolumeId());
 	output.append(' Status:' + vol.getStatus());
@@ -58,9 +58,9 @@ def printSANFields(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol) {
 
 def listVolumesSAN() {
 	StringBuilder listingString = new StringBuilder("Backend-TGT Volume listing:\n");
-	EntityTransaction db = Entities.get(edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo.class);
-	edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo searchVol = Groovyness.expandoMetaClass(new edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo());
-	edu.ucsb.eucalyptus.cloud.entities.SANVolumeInfo vol = null;
+	EntityTransaction db = Entities.get(com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo.class);
+	com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo searchVol = Groovyness.expandoMetaClass(new com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo());
+	com.eucalyptus.blockstorage.san.common.entities.SANVolumeInfo vol = null;
 	Entities.query(searchVol).each{ volume ->
 		vol= Groovyness.expandoMetaClass(volume);
 		listingString.append('Volume: ' + volume.getVolumeId());
