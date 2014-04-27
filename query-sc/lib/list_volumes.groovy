@@ -1,6 +1,6 @@
-import edu.ucsb.eucalyptus.cloud.entities.VolumeInfo;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeToken;
-import edu.ucsb.eucalyptus.cloud.entities.VolumeExportRecord;
+import com.eucalyptus.blockstorage.entities.VolumeInfo;
+import com.eucalyptus.blockstorage.entities.VolumeToken;
+import com.eucalyptus.blockstorage.entities.VolumeExportRecord;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;
