@@ -1,5 +1,9 @@
 # ps-java
 Produces output similar to 'ps', especially cputime for the LWP corresponding to the thread from a running JVM along with the internal com.sum.jvm.JavaThread's name.
+## Do it!
+- ```[root@g-15-11 ps-java]# yum install pstack kernel-devel```
+- ```[root@g-15-11 ps-java]# bash <(wget -O- -q https://github.com/eucalyptus/deveutils/raw/ps-java/ps-java/ps-java)```
+
 # Example output
 ```bash
 [root@g-15-11 ps-java]# ./ps-java
