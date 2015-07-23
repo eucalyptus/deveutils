@@ -162,7 +162,7 @@ sortedHosts.eachWithIndex{ h, i ->
       print "Sleeping for 5 seconds:  "
       5.times{ sleep( 1000 ); print "${5-it} "; }
       println " GO!"
-      1000.times {
+      10.times {
         mcastAddr(i+1).each { k, v ->
           sender(k,v,h)
         }
