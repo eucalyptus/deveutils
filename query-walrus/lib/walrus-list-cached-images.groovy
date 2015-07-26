@@ -1,4 +1,5 @@
-import edu.ucsb.eucalyptus.cloud.entities.ImageCacheInfo;
+import com.eucalyptus.objectstorage.entities.ImageCacheInfo; // 3.4.1
+//import edu.ucsb.eucalyptus.cloud.entities.ImageCacheInfo;
 import com.eucalyptus.entities.Entities;
 import javax.persistence.EntityTransaction;
 import com.eucalyptus.scripting.Groovyness;
